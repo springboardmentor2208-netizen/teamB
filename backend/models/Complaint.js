@@ -1,0 +1,25 @@
+import mongoose from "mongoose";
+
+const complaintSchema = new mongoose.Schema(
+  {
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    title: String,
+    description: String,
+    photo: String,
+    location_coords: String,
+    address: String,
+    assigned_to: String,
+    status: {
+      type: String,
+      enum: ["received", "in_review", "resolved"],
+      default: "received",
+    },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("Complaint", complaintSchema);
