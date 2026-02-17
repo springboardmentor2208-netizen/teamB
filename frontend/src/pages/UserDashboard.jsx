@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";   
 
 const UserDashboard = () => {
+  const navigate = useNavigate();   
+
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -11,7 +14,6 @@ const UserDashboard = () => {
   const [complaints, setComplaints] = useState([]);
 
   useEffect(() => {
-    // Mock stats data
     setStats({
       total: 12,
       pending: 3,
@@ -19,7 +21,6 @@ const UserDashboard = () => {
       resolved: 4,
     });
 
-    // Mock complaints data
     setComplaints([
       {
         id: 1,
@@ -70,13 +71,23 @@ const UserDashboard = () => {
       <div className="w-full max-w-6xl">
 
         {/* -------- Header -------- */}
-        <div className="mb-6 ml-1">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Dashboard
-          </h1>
-          <p className="text-[11px] text-slate-500 uppercase tracking-widest mt-0.5">
-            Quick view of your submitted complaints
-          </p>
+        <div className="mb-6 ml-1 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Dashboard
+            </h1>
+            <p className="text-[11px] text-slate-500 uppercase tracking-widest mt-0.5">
+              Quick view of your submitted complaints
+            </p>
+          </div>
+
+          {/* Report Issue Button Added */}
+          <button
+            onClick={() => navigate("/dashboard/report-issue")}
+            className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+          >
+            Report Issue
+          </button>
         </div>
 
         {/* -------- Stats Grid -------- */}
@@ -108,7 +119,6 @@ const UserDashboard = () => {
           </div>
 
           <div className="rounded-[1.5rem] border border-white bg-white/70 shadow-[0_10px_30px_rgba(79,70,229,0.06)] backdrop-blur-xl overflow-hidden">
-
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50">
                 <tr className="text-[11px] uppercase tracking-widest text-slate-600">
@@ -116,7 +126,6 @@ const UserDashboard = () => {
                   <th className="px-6 py-4">Category</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Date</th>
-                  {/* <th className="px-6 py-4 text-center">Action</th> */}
                 </tr>
               </thead>
 
@@ -129,11 +138,9 @@ const UserDashboard = () => {
                     <td className="px-6 py-4 font-medium text-slate-800">
                       {item.title}
                     </td>
-
                     <td className="px-6 py-4 text-slate-600">
                       {item.category}
                     </td>
-
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusStyle(
@@ -143,21 +150,13 @@ const UserDashboard = () => {
                         {item.status}
                       </span>
                     </td>
-
                     <td className="px-6 py-4 text-slate-500">
                       {item.date}
-                    </td>
-
-                    <td className="px-6 py-4 text-center">
-                      {/* <button className="px-4 py-1.5 text-xs font-semibold text-indigo-600 border border-indigo-600 rounded-full hover:bg-indigo-600 hover:text-white transition">
-                        View
-                      </button> */}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
           </div>
         </div>
 

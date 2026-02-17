@@ -5,6 +5,7 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import UserDashboard from "./pages/UserDashboard.jsx";
 import Profile from "./pages/Profile.jsx";
+import ReportIssue from "./pages/ReportIssue.jsx"; 
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { ROLES } from "./utils/roles.js";
 
@@ -15,19 +16,36 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.USER, ROLES.VOLUNTEER, ROLES.ADMIN]}>
+            <ProtectedRoute
+              allowedRoles={[ROLES.USER, ROLES.VOLUNTEER, ROLES.ADMIN]}
+            >
               <UserDashboard />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/dashboard/profile"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.USER, ROLES.VOLUNTEER, ROLES.ADMIN]}>
+            <ProtectedRoute
+              allowedRoles={[ROLES.USER, ROLES.VOLUNTEER, ROLES.ADMIN]}
+            >
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard/report-issue"
+          element={
+            <ProtectedRoute
+              allowedRoles={[ROLES.USER, ROLES.VOLUNTEER, ROLES.ADMIN]}
+            >
+              <ReportIssue />
             </ProtectedRoute>
           }
         />
