@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from "react-router-dom";
 
-
 const CameraIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -33,71 +32,102 @@ const TrashIcon = () => (
 );
 
 export default function CleanStreetLanding() {
+  const heroRef = useRef(null);
   const statsRef = useRef(null);
   const [statsAnimated, setStatsAnimated] = useState(false);
+  const [heroVisible, setHeroVisible] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) setStatsAnimated(true);
-    }, { threshold: 0.8 });
-    if (statsRef.current) observer.observe(statsRef.current);
-    return () => observer.disconnect();
+    const heroObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setHeroVisible(true);
+          heroObserver.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    const statsObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setStatsAnimated(true);
+          statsObserver.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (heroRef.current) heroObserver.observe(heroRef.current);
+    if (statsRef.current) statsObserver.observe(statsRef.current);
+
+    return () => {
+      heroObserver.disconnect();
+      statsObserver.disconnect();
+    };
   }, []);
 
   return (
     <div className="min-h-screen bg-[#F8F9FF] font-sans text-slate-900 overflow-x-hidden pb-10">
       <style>{`
-
   /* Custom Scrollbar Styling */
   ::-webkit-scrollbar {
-  width: 8px; /* Slimmer width */
+    width: 8px; /* Slimmer width */
   }
 
   ::-webkit-scrollbar-track {
-  background: #F8F9FF; /* Match your page background */
+    background: #F8F9FF; /* Match your page background */
   }
 
   ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #4F46E5, #7C3AED); /* Indigo to Violet gradient */
-  border-radius: 10px;
-  border: 2px solid #F8F9FF; /* Creates a "floating" effect */
+    background: linear-gradient(to bottom, #4F46E5, #7C3AED); /* Indigo to Violet gradient */
+    border-radius: 10px;
+    border: 2px solid #F8F9FF; /* Creates a "floating" effect */
   }
 
   ::-webkit-scrollbar-thumb:hover {
-  background: #4338CA; /* Darker Indigo on hover */
+    background: #4338CA; /* Darker Indigo on hover */
   }
 
   /* For Firefox */
   * {
-  scrollbar-width: thin;
-  scrollbar-color: #4F46E5 #F8F9FF;
+    scrollbar-width: thin;
+    scrollbar-color: #4F46E5 #F8F9FF;
   }
 
-        .glass-card {
-          background: rgba(255, 255, 255, 0.4);
-          backdrop-filter: blur(24px);
-          border: 1px solid rgba(255, 255, 255, 0.6);
-          box-shadow: 0 18px 50px rgba(79, 70, 229, 0.12);
-        }
-        .text-gradient {
-          background: linear-gradient(to right, #4F46E5, #7C3AED);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .step-circle {
-          background: white;
-          border: 2px solid #4F46E5;
-          box-shadow: 0 10px 20px rgba(79, 70, 229, 0.1);
-        }
+  .glass-card {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 18px 50px rgba(79, 70, 229, 0.12);
+  }
+  .text-gradient {
+    background: linear-gradient(to right, #4F46E5, #7C3AED);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .step-circle {
+    background: white;
+    border: 2px solid #4F46E5;
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.1);
+  }
       `}</style>
 
       {/* Hero Section */}
-      <section className="relative pt-15 pb-16 px-4 flex flex-col items-center">
+      <section
+        ref={heroRef}
+        className="relative pt-15 pb-16 px-4 flex flex-col items-center"
+      >
         {/* Decorative Blurs matching your Nav palette */}
         <div className="pointer-events-none absolute left-0 top-0 h-64 w-64 rounded-full bg-indigo-400/10 blur-[100px]" />
         <div className="pointer-events-none absolute right-0 top-40 h-72 w-72 rounded-full bg-rose-400/10 blur-[100px]" />
 
-        <div className="w-full max-w-xl glass-card rounded-[2.5rem] px-8 pb-12 pt-20 relative text-center">
+        <div
+          className={
+            "w-full max-w-xl glass-card rounded-[2.5rem] px-8 pb-12 pt-20 relative text-center transform transition-all duration-700 " +
+            (heroVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6")
+          }
+        >
           {/* Circular Floating Logo */}
           <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-10">
             <div className="bg-white/80 p-1 rounded-full shadow-2xl border border-white flex items-center justify-center aspect-square backdrop-blur-md">
@@ -133,7 +163,13 @@ export default function CleanStreetLanding() {
       </section>
 
       {/* Stats Section with Scroll Animation */}
-      <section ref={statsRef} className="max-w-5xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section
+        ref={statsRef}
+        className={
+          "max-w-5xl mx-auto px-4 py-10 grid grid-cols-2 md:grid-cols-4 gap-4 transform transition-all duration-700 " +
+          (statsAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6")
+        }
+      >
         <StatItem number={4905} label="Cities" animated={statsAnimated} />
         <StatItem number={3000000} label="Citizens" animated={statsAnimated} />
         <StatItem number={500000} label="Resolved" animated={statsAnimated} />
@@ -180,13 +216,50 @@ export default function CleanStreetLanding() {
         </div>
       </section>
 
-      {/* Minimalist Branded Footer */}
-      <footer className="mt-20 py-12 text-center border-t border-indigo-50">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <img src="/image.png" alt="Logo" className="w-5 h-5 rounded-full grayscale opacity-40" />
-          <span className="font-bold text-indigo-400 uppercase tracking-[0.4em] text-[10px]">CleanStreet</span>
+      {/* Detailed Footer */}
+      <footer className="bg-slate-50 text-slate-500 border-t border-indigo-50 py-16 px-6 mt-12">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-10">
+          <div>
+            <h3 className="text-slate-900 font-bold text-lg mb-4">
+              CleanStreet Platform
+            </h3>
+            <p className="text-sm">
+              A civic issue management platform built under the Swachh Bharat vision
+              to improve transparency, responsiveness, and urban governance.
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-slate-900 font-semibold mb-4">Quick Links</h4>
+            <ul className="space-y-2 text-sm">
+              <li>Home</li>
+              <li>Features</li>
+              <li>Workflow</li>
+              <li>Services</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-slate-900 font-semibold mb-4">Resources</h4>
+            <ul className="space-y-2 text-sm">
+              <li>Documentation</li>
+              <li>Privacy Policy</li>
+              <li>Terms</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-slate-900 font-semibold mb-4">Contact</h4>
+            <ul className="space-y-2 text-sm">
+              <li>Email: support@cleanstreet.in</li>
+              <li>India</li>
+            </ul>
+          </div>
         </div>
-        <p className="text-slate-400 text-[10px]">&copy; 2026 Swachh Bharat Initiative. All rights reserved.</p>
+
+        <div className="text-center text-xs mt-12 pt-6">
+          © 2026 CleanStreet Platform | Swachh Bharat Inspired Initiative
+        </div>
       </footer>
     </div>
   );

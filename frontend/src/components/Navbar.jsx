@@ -38,8 +38,7 @@ const Navbar = () => {
                   <NavLink
                     to="/dashboard"
                     className={({ isActive }) =>
-                      `${linkBase} ${
-                        isActive ? "text-indigo-600" : "text-slate-500"
+                      `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"
                       } hover:text-indigo-700`
                     }
                   >
@@ -48,12 +47,23 @@ const Navbar = () => {
                   <NavLink
                     to="/dashboard/profile"
                     className={({ isActive }) =>
-                      `${linkBase} ${
-                        isActive ? "text-indigo-600" : "text-slate-500"
+                      `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"
                       } hover:text-indigo-700`
                     }
                   >
                     Profile
+                  </NavLink>
+
+                  {/* NEW: Report Issue Button */}
+                  <NavLink //addreport nav path here(Routes)
+                    to="/report-issue"
+                    className={({ isActive }) =>
+                      `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"
+                      } hover:text-indigo-700
+                }`
+                    }
+                  >
+                    Report Issue
                   </NavLink>
                 </div>
               )}
@@ -66,8 +76,7 @@ const Navbar = () => {
                   <NavLink
                     to="/login"
                     className={({ isActive }) =>
-                      `${pillBase} border border-indigo-100 bg-white/50 text-slate-700 hover:-translate-y-0.5 hover:shadow-lg ${
-                        isActive ? "border-indigo-400 text-indigo-600" : ""
+                      `${pillBase} border border-indigo-100 bg-white/50 text-slate-700 hover:-translate-y-0.5 hover:shadow-lg ${isActive ? "border-indigo-400 text-indigo-600" : ""
                       }`
                     }
                   >
@@ -76,8 +85,7 @@ const Navbar = () => {
                   <NavLink
                     to="/register"
                     className={({ isActive }) =>
-                      `${pillBase} bg-indigo-600 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 hover:bg-indigo-700 ${
-                        isActive ? "bg-violet-600" : ""
+                      `${pillBase} bg-indigo-600 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 hover:bg-indigo-700 ${isActive ? "bg-violet-600" : ""
                       }`
                     }
                   >
@@ -89,7 +97,7 @@ const Navbar = () => {
               {user && (
                 <>
                   <span className="hidden sm:inline text-xs font-semibold text-slate-500">
-                   {user.name}
+                    {user.name}
                   </span>
                   <button
                     type="button"
