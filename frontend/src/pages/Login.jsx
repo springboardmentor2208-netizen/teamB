@@ -107,6 +107,16 @@ const Login = () => {
           </button>
 
           <p className="mt-6 text-center text-xs text-slate-400">
+            <Link
+              to="/forgot-password"
+              style={{ textDecoration: 'none' }}
+              className="text-indigo-600 font-bold no-underline hover:text-indigo-700"
+            >
+              Forgot Password?
+            </Link>
+          </p>
+
+          <p className="mt-2 text-center text-xs text-slate-400">
             New here?{" "}
             <Link
               to="/register"

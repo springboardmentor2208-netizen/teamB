@@ -10,6 +10,7 @@ const Profile = () => {
     location: "",
     phone: "",
   });
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -38,6 +39,8 @@ const Profile = () => {
       const { data } = await authApi.updateProfile(form);
       const token = localStorage.getItem("cs_token");
       login({ ...user, ...data }, token);
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 3000); // Hide popup after 3 seconds
     } catch (err) {
       console.error(err);
     }
@@ -132,6 +135,23 @@ const Profile = () => {
           </form>
         </div>
       </div>
+
+      {/* Success Popup */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-white bg-white/95 shadow-2xl backdrop-blur-xl p-6 text-center">
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-slate-800">Profile Updated!</h3>
+            <p className="text-sm text-slate-600">Your profile changes have been saved successfully.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

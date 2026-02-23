@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../api/authApi.js";
 
 const Register = () => {
+  const [step, setStep] = useState(1); // 1: form, 2: OTP verification
   const [form, setForm] = useState({
     name: "",
     username: "",
@@ -12,7 +13,9 @@ const Register = () => {
     location: "",
     role: "user",
   });
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -22,11 +25,25 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setMessage("");
     try {
       await authApi.register(form);
-      navigate("/login");
+      setMessage("OTP sent to your email for verification");
+      setStep(2);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      await authApi.verifyRegistrationOTP({ email: form.email, otp });
+      setMessage("Email verified successfully. Redirecting to login...");
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (err) {
+      setError(err.response?.data?.message || "OTP verification failed");
     }
   };
 
@@ -47,6 +64,14 @@ const Register = () => {
               {error}
             </div>
           )}
+
+          {message && (
+            <div className="mb-5 rounded-xl border border-green-50 bg-green-50 px-3 py-2 text-[11px] text-green-600">
+              {message}
+            </div>
+          )}
+
+          {step === 1 && (
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3.5">
             <div className="flex flex-col gap-1">
@@ -144,6 +169,31 @@ const Register = () => {
               </button>
             </div>
           </form>
+          )}
+
+          {step === 2 && (
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-slate-400 ml-1">
+                  Enter OTP sent to {form.email}
+                </label>
+                <input
+                  className="rounded-xl border border-slate-100 bg-white/50 px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-400 transition-all"
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="6-digit OTP"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full rounded-full bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+              >
+                Verify Email
+              </button>
+            </form>
+          )}
 
           <p className="mt-6 text-center text-xs text-slate-500">
             Already registered?{" "}

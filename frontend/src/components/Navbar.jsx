@@ -37,29 +37,32 @@ const Navbar = () => {
                   <NavLink
                     to="/dashboard"
                     className={({ isActive }) =>
-                      `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"} hover:text-indigo-700`
+                      `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"} relative group`
                     }
                   >
-                    Dashboard
+                    <span className="relative z-10">Dashboard</span>
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left"></span>
                   </NavLink>
 
                   <NavLink
                     to="/dashboard/profile"
                     className={({ isActive }) =>
-                      `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"} hover:text-indigo-700`
+                      `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"} relative group`
                     }
                   >
-                    Profile
+                    <span className="relative z-10">Profile</span>
+                    <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left"></span>
                   </NavLink>
 
                   {location.pathname !== "/dashboard/report-issue" && (
                     <NavLink
                       to="/dashboard/report-issue"
                       className={({ isActive }) =>
-                        `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"} hover:text-indigo-700`
+                        `${linkBase} ${isActive ? "text-indigo-600" : "text-slate-500"} relative group`
                       }
                     >
-                      Report Issue
+                      <span className="relative z-10">Report Issue</span>
+                      <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left"></span>
                     </NavLink>
                   )}
                 </div>
@@ -73,7 +76,7 @@ const Navbar = () => {
                   <NavLink
                     to="/login"
                     className={({ isActive }) =>
-                      `${pillBase} border border-indigo-100 bg-white/50 text-slate-700 hover:-translate-y-0.5 hover:shadow-lg ${
+                      `${pillBase} border border-indigo-100 bg-white/50 text-slate-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-200/50 hover:bg-indigo-50/50 hover:border-indigo-200 hover:scale-105 transition-all duration-200 ${
                         isActive ? "border-indigo-400 text-indigo-600" : ""
                       }`
                     }
@@ -84,7 +87,7 @@ const Navbar = () => {
                   <NavLink
                     to="/register"
                     className={({ isActive }) =>
-                      `${pillBase} bg-indigo-600 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 hover:bg-indigo-700 ${
+                      `${pillBase} bg-indigo-600 text-white shadow-[0_10px_20px_rgba(79,70,229,0.3)] hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-[0_12px_25px_rgba(79,70,229,0.4)] hover:scale-105 transition-all duration-200 ${
                         isActive ? "bg-violet-600" : ""
                       }`
                     }
@@ -103,7 +106,7 @@ const Navbar = () => {
                   <button
                     type="button"
                     onClick={logout}
-                    className={`${pillBase} border border-rose-100 bg-white/50 text-rose-600 hover:-translate-y-0.5 hover:bg-rose-50`}
+                    className={`${pillBase} border border-rose-100 bg-white/50 text-rose-600 hover:-translate-y-0.5 hover:bg-rose-50 hover:border-rose-200 hover:shadow-lg hover:shadow-rose-200/50 hover:scale-105 transition-all duration-200`}
                   >
                     Logout
                   </button>
