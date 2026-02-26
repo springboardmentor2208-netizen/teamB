@@ -1,27 +1,11 @@
-const express = require("express");
-const Complaint = require("../models/Complaint");
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import { createComplaint } from "../controllers/complaintController.js";
+import upload from "../utils/imageupload/upload.js";
 
 const router = express.Router();
 
 // Create complaint
-router.post("/", async (req, res) => {
-  try {
-    const complaint = new Complaint(req.body);
-    await complaint.save();
-    res.status(201).json(complaint);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+router.post("/", protect, upload.single("photo"), createComplaint);
 
-// Get all complaints
-router.get("/", async (req, res) => {
-  try {
-    const complaints = await Complaint.find().populate("user_id assigned_to");
-    res.json(complaints);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-module.exports = router;
+export default router;

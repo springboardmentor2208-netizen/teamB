@@ -28,18 +28,24 @@ const ReportIssue = () => {
   }
 
   try {
-    const complaintData = {
-      title,
-      issueType,
-      priority,
-      address,
-      landmark,
-      description,
-      latitude: location.lat,
-      longitude: location.lng,
-    };
+    const formData = new FormData();
+    // Append all text fields
+    formData.append("title", title);
+    formData.append("issueType", issueType);
+    formData.append("priority", priority);
+    formData.append("address", address);
+    formData.append("landmark", landmark);
+    formData.append("description", description);
+    formData.append("latitude", location.lat);
+    formData.append("longitude", location.lng);
+  
+    if (photo) {
+      formData.append("photo", photo); // Multer field
+    }
 
-    await issueApi.createIssue(complaintData);
+    await issueApi.createIssue(formData,{
+      headers: { "Content-Type": "multipart/form-data" },
+    });
 
     alert("Complaint submitted successfully!");
   } catch (error) {

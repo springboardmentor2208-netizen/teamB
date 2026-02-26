@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
     profile_photo: { type: String },
+    photoPublicId: { type: String },
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
   },

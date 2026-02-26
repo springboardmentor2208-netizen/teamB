@@ -10,7 +10,11 @@ const complaintSchema = new mongoose.Schema(
     title: String,
     description: String,
     photo: String,
-    location_coords: String,
+    photoPublicId: String,
+    location_coords: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
     address: String,
     assigned_to: String,
     status: {
