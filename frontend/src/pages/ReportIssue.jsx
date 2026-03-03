@@ -2,15 +2,11 @@ import ReportMap from "../components/ReportMap";
 import { useState } from "react";
 import { issueApi } from "../api/issueApi";
 
-const inputClass =
-  "mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
-
-const labelClass =
-  "text-[11px] font-semibold tracking-widest text-slate-400 uppercase";
-
 const ReportIssue = () => {
   const [photo, setPhoto] = useState(null);
   const [location, setLocation] = useState(null);
+  const [accuracy, setAccuracy] = useState(null);
+  const [loadingLocation, setLoadingLocation] = useState(false);
 
   const [title, setTitle] = useState("");
   const [issueType, setIssueType] = useState("");
@@ -19,201 +15,197 @@ const ReportIssue = () => {
   const [landmark, setLandmark] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
+  // Reverse Geocoding
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await res.json();
+      if (data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch (err) {
+      console.error("Reverse geocoding failed", err);
+    }
+  };
 
-  if (!location) {
-    alert("Please select a location on the map.");
-    return;
-  }
-
-  try {
-    const formData = new FormData();
-    // Append all text fields
-    formData.append("title", title);
-    formData.append("issueType", issueType);
-    formData.append("priority", priority);
-    formData.append("address", address);
-    formData.append("landmark", landmark);
-    formData.append("description", description);
-    formData.append("latitude", location.lat);
-    formData.append("longitude", location.lng);
-  
-    if (photo) {
-      formData.append("photo", photo); // Multer field
+  const fetchCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported");
+      return;
     }
 
-    await issueApi.createIssue(formData,{
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    setLoadingLocation(true);
 
-    alert("Complaint submitted successfully!");
-  } catch (error) {
-    console.error(error);
-    alert("Issue API connected, waiting for backend implementation.");
-  }
-};
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
 
+        setLocation(coords);
+        setAccuracy(position.coords.accuracy);
+
+        await reverseGeocode(coords.lat, coords.lng);
+
+        setLoadingLocation(false);
+      },
+      (error) => {
+        alert("Location permission denied");
+        setLoadingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    );
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!location) {
+      alert("Please fetch or select a location.");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("address", address);
+      formData.append("latitude", location.lat);
+      formData.append("longitude", location.lng);
+
+      if (photo) formData.append("photo", photo);
+
+      await issueApi.createIssue(formData);
+
+      alert("Complaint submitted successfully!");
+
+      setTitle("");
+      setIssueType("");
+      setPriority("");
+      setAddress("");
+      setLandmark("");
+      setDescription("");
+      setPhoto(null);
+      setLocation(null);
+      setAccuracy(null);
+
+    } catch (err) {
+      alert("Submission failed.");
+    }
+  };
 
   return (
     <div className="w-full flex justify-center">
       <div className="w-full max-w-5xl">
 
-        {/* Header */}
-        <div className="mb-8 ml-1">
-          <h1 className="text-3xl font-bold text-slate-800">
-            Report a Civic Issue
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Report issues in your area for quick resolution
-          </p>
-        </div>
+        <h1 className="text-3xl font-bold mb-6">
+          Report a Civic Issue
+        </h1>
 
-        {/* Card */}
-        <div className="w-full rounded-[2rem] bg-white px-8 py-8 shadow-lg">
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
+
+          <input
+            placeholder="Issue Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="border p-3 rounded-xl"
+            required
+          />
+
+          <select
+            value={issueType}
+            onChange={(e) => setIssueType(e.target.value)}
+            className="border p-3 rounded-xl"
           >
+            <option value="">Issue Type</option>
+            <option>Garbage</option>
+            <option>Pothole</option>
+            <option>Water Leakage</option>
+            <option>Streetlight</option>
+          </select>
 
-            {/* Issue Title */}
-            <div className="md:col-span-2">
-              <label className={labelClass}>Issue Title</label>
-              <input
-                className={inputClass}
-                placeholder="Short title of the issue"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            className="border p-3 rounded-xl"
+          >
+            <option value="">Priority</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
 
-            {/* Issue Type */}
-            <div>
-              <label className={labelClass}>Issue Type</label>
-              <select
-                className={inputClass}
-                value={issueType}
-                onChange={(e) => setIssueType(e.target.value)}
-              >
-                <option value="">Select type</option>
-                <option value="Garbage">Garbage</option>
-                <option value="Pothole">Pothole</option>
-                <option value="Water Leakage">Water Leakage</option>
-                <option value="Streetlight">Streetlight</option>
-              </select>
-            </div>
+          <input
+            placeholder="Nearby Landmark"
+            value={landmark}
+            onChange={(e) => setLandmark(e.target.value)}
+            className="border p-3 rounded-xl"
+          />
 
-            {/* Priority */}
-            <div>
-              <label className={labelClass}>Priority</label>
-              <select
-                className={inputClass}
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-              >
-                <option value="">Select priority</option>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
+          <textarea
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="border p-3 rounded-xl md:col-span-2"
+            required
+          />
 
-            {/* Address */}
-            <div>
-              <label className={labelClass}>Address</label>
-              <input
-                className={inputClass}
-                placeholder="Street / Area"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
-            </div>
+          <input
+            placeholder="Address (Editable)"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="border p-3 rounded-xl md:col-span-2"
+            required
+          />
 
-            {/* Landmark */}
-            <div>
-              <label className={labelClass}>Nearby Landmark</label>
-              <input
-                className={inputClass}
-                placeholder="Optional"
-                value={landmark}
-                onChange={(e) => setLandmark(e.target.value)}
-              />
-            </div>
+          <div className="md:col-span-2">
+            <button
+              type="button"
+              onClick={fetchCurrentLocation}
+              className="mb-3 px-4 py-2 bg-indigo-600 text-white rounded-full"
+            >
+              Use Current Location
+            </button>
 
-            {/* Description */}
-            <div className="md:col-span-2">
-              <label className={labelClass}>Description</label>
-              <textarea
-                rows={3}
-                className={inputClass}
-                placeholder="Describe the issue in detail"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
+            <ReportMap
+              location={location}
+              setLocation={setLocation}
+              accuracy={accuracy}
+              loading={loadingLocation}
+            />
 
-            {/* Map */}
-            <div className="md:col-span-2">
-              <label className={labelClass}>Location on Map</label>
-              <div className="mt-3 rounded-xl overflow-hidden">
-                <ReportMap
-                  location={location}
-                  setLocation={setLocation}
-                />
-              </div>
+            {accuracy && (
+              <p className="text-sm mt-2">
+                GPS Accuracy: {Math.round(accuracy)} meters
+              </p>
+            )}
+          </div>
 
-              {location && (
-                <div className="mt-2 text-sm text-slate-600">
-                  <p>Latitude: {location.lat}</p>
-                  <p>Longitude: {location.lng}</p>
-                </div>
-              )}
-            </div>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => setPhoto(e.target.files[0])}
+            className="md:col-span-2"
+          />
 
-           {/* Upload Photo */}
-<div className="md:col-span-2">
-  <label className={labelClass}>Upload Issue Photo</label>
+          <button
+            type="submit"
+            className="md:col-span-2 bg-indigo-600 text-white py-3 rounded-full"
+          >
+            Submit Complaint
+          </button>
 
-  <label className="mt-4 relative flex h-36 w-full cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50 transition-all duration-200 hover:bg-indigo-100">
-
-    <div className="flex flex-col items-center justify-center text-center">
-      {!photo ? (
-        <>
-          <span className="text-sm font-semibold text-indigo-600">
-            Click to upload photo
-          </span>
-          <span className="mt-1 text-xs text-indigo-400">
-            JPG, PNG (Max 5MB)
-          </span>
-        </>
-      ) : (
-        <span className="text-sm font-semibold text-indigo-700">
-          {photo.name}
-        </span>
-      )}
-    </div>
-
-    <input
-      type="file"
-      className="absolute inset-0 opacity-0 cursor-pointer"
-      onChange={(e) => setPhoto(e.target.files[0])}
-    />
-  </label>
-</div>
-
-
-            {/* Submit */}
-            <div className="md:col-span-2 pt-4">
-              <button
-                type="submit"
-                className="w-full rounded-full bg-indigo-600 py-3 text-sm font-bold text-white hover:bg-indigo-700 transition"
-              >
-                Submit Complaint
-              </button>
-            </div>
-
-          </form>
-        </div>
+        </form>
       </div>
     </div>
   );
