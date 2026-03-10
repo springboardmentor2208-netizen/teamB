@@ -596,18 +596,21 @@ export default function ViewComplaints() {
             try {
                 const { data } = await issueApi.getMyIssues();
                 setComplaints(data);
-                const v = {}, c = {};
+                const v = {}, c = {}, u = {};
                 data.forEach(d => {
                     v[d._id] = { upvotes: d.upvotes ?? 0, downvotes: d.downvotes ?? 0 };
+                    u[d._id] = d.userVote ?? null;
                     c[d._id] = (d.comments ?? []).map((cm, i) => ({
-                        id: i,
+                        id: cm._id ?? i,
                         user: cm.userName ?? cm.user ?? "Anonymous",
                         text: cm.text ?? cm.comment ?? "",
                         time: cm.createdAt ?? cm.time ?? new Date().toISOString(),
-                        isOwn: false,
+                        isOwn: cm.userName || cm.user ? false : true,
                     }));
                 });
-                setVoteData(v); setComments(c);
+                setVoteData(v);
+                setUserVotes(u);
+                setComments(c);
             } catch (e) { console.error(e); }
             finally { setLoading(false); }
         })();
@@ -641,9 +644,39 @@ export default function ViewComplaints() {
         return list;
     }, [complaints, filterStatus, filterCat, search, sortBy, voteData]);
 
-    const handleVote = (id, dir) => {
+    const openComplaint = async (complaint) => {
+        setSelected(complaint);
+
+        try {
+            const { data } = await issueApi.getIssue(complaint._id);
+            const { complaint: detailed, votes, comments: serverComments } = data;
+
+            setSelected(detailed);
+            setVoteData(vd => ({
+                ...vd,
+                [detailed._id]: { upvotes: votes.upvotes, downvotes: votes.downvotes },
+            }));
+            setUserVotes(u => ({ ...u, [detailed._id]: votes.userVote }));
+
+            const mappedComments = (serverComments ?? []).map((cm) => ({
+                id: cm._id,
+                user: cm.user_id?.name ?? "Anonymous",
+                text: cm.content ?? "",
+                time: cm.createdAt ?? new Date().toISOString(),
+                isOwn: cm.user_id?.name === "You" || false,
+            }));
+            setComments(cd => ({ ...cd, [detailed._id]: mappedComments }));
+        } catch (e) {
+            console.error(e);
+            showToast("Failed to load complaint details", "error");
+        }
+    };
+
+    const handleVote = async (id, dir) => {
         const prev = userVotes[id] ?? null;
         const tog = prev === dir;
+
+        // Optimistic UI update
         setUserVotes(v => ({ ...v, [id]: tog ? null : dir }));
         setVoteData(vd => {
             const cur = vd[id] ?? { upvotes: 0, downvotes: 0 };
@@ -653,12 +686,38 @@ export default function ViewComplaints() {
             if (!tog) { if (dir === "up") upvotes++; else downvotes++; }
             return { ...vd, [id]: { upvotes, downvotes } };
         });
-        showToast(tog ? "Vote removed" : dir === "up" ? "Upvoted" : "Downvoted", tog ? "info" : dir === "up" ? "success" : "error");
+
+        try {
+            const { data } = await issueApi.voteIssue(id, dir);
+            setVoteData(vd => ({ ...vd, [id]: { upvotes: data.votes.upvotes, downvotes: data.votes.downvotes } }));
+            setUserVotes(u => ({ ...u, [id]: data.votes.userVote }));
+            showToast(data.message, tog ? "info" : dir === "up" ? "success" : "error");
+        } catch (e) {
+            console.error(e);
+            showToast("Unable to submit vote", "error");
+            // revert optimistic change
+            setUserVotes(v => ({ ...v, [id]: prev }));
+            setVoteData(vd => ({ ...vd }));
+        }
     };
 
     const handleComment = async (id, user, text) => {
-        setComments(cd => ({ ...cd, [id]: [...(cd[id] ?? []), { id: Date.now(), user, text, time: new Date().toISOString(), isOwn: true }] }));
-        showToast("Comment posted", "success");
+        try {
+            const { data } = await issueApi.addComment(id, text);
+            const comment = data.data;
+            const mapped = {
+                id: comment._id,
+                user: comment.user_id?.name || "You",
+                text: comment.content || "",
+                time: comment.createdAt || new Date().toISOString(),
+                isOwn: true,
+            };
+            setComments(cd => ({ ...cd, [id]: [...(cd[id] ?? []), mapped] }));
+            showToast("Comment posted", "success");
+        } catch (e) {
+            console.error(e);
+            showToast("Unable to post comment", "error");
+        }
     };
 
     // Upgraded control styles for the header
@@ -801,7 +860,7 @@ export default function ViewComplaints() {
                                 votes={voteData[c._id] ?? { upvotes: 0, downvotes: 0 }}
                                 userVote={userVotes[c._id] ?? null}
                                 commentCount={(commentData[c._id] ?? []).length}
-                                onOpen={setSelected}
+                                onOpen={openComplaint}
                                 onVote={handleVote}
                             />
                         ))}

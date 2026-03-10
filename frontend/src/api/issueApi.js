@@ -6,4 +6,13 @@ export const issueApi = {
 
   getMyIssues: () =>
     axiosClient.get("/issues/my"),
+
+  getIssue: (id) =>
+    axiosClient.get(`/issues/${id}`),
+
+  voteIssue: (id, voteType) =>
+    axiosClient.post(`/issues/${id}/vote`, { vote_type: voteType }),
+
+  addComment: (id, content) =>
+    axiosClient.post(`/issues/${id}/comments`, { content }),
 };

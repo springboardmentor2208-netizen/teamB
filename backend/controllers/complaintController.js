@@ -50,7 +50,25 @@ export const getMyComplaints = asyncHandler(async (req, res) => {
     user_id: req.user._id,
   }).sort({ createdAt: -1 });
 
-  res.status(200).json(complaints);
+  // Enrich complaints with vote/comment counts and current user's vote
+  const enriched = await Promise.all(
+    complaints.map(async (c) => {
+      const voteCounts = await getVoteCounts(c._id);
+      const userVote = await Vote.findOne({ complaint_id: c._id, user_id: req.user._id });
+      const commentCount = await Comment.countDocuments({ complaint_id: c._id });
+
+      return {
+        ...c.toObject(),
+        upvotes: voteCounts.upvotes,
+        downvotes: voteCounts.downvotes,
+        userVote: userVote?.vote_type || null,
+        commentCount,
+        comments: [], // kept for backwards compatibility; actual comments fetched in detail view
+      };
+    })
+  );
+
+  res.status(200).json(enriched);
 });
 
 export const getComplaintDetails = asyncHandler(async (req, res) => {
