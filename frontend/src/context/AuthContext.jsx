@@ -5,7 +5,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState("");
-
+  const [loading, setLoading] = useState(true);
 
   const login = (userData, jwt) => {
     setUser(userData);
@@ -40,10 +40,11 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(savedUser));
       setToken(savedToken);
     }
+    setLoading(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, devLogin }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, devLogin }}>
       {children}
     </AuthContext.Provider>
   );

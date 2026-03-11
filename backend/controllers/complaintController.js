@@ -12,6 +12,20 @@ const getVoteCounts = async (complaintId) => {
   return { upvotes, downvotes };
 };
 
+const normalizeVoteType = (voteType) => {
+  if (!voteType) return null;
+  const v = voteType.toString().toLowerCase();
+  if (v === "up" || v === "upvote") return "upvote";
+  if (v === "down" || v === "downvote") return "downvote";
+  return null;
+};
+
+const toShortVote = (voteType) => {
+  if (voteType === "upvote") return "up";
+  if (voteType === "downvote") return "down";
+  return null;
+};
+
 export const createComplaint = asyncHandler(async (req, res) => {
   let photoData = null;
 
@@ -61,7 +75,7 @@ export const getMyComplaints = asyncHandler(async (req, res) => {
         ...c.toObject(),
         upvotes: voteCounts.upvotes,
         downvotes: voteCounts.downvotes,
-        userVote: userVote?.vote_type || null,
+        userVote: toShortVote(userVote?.vote_type),
         commentCount,
         comments: [], // kept for backwards compatibility; actual comments fetched in detail view
       };
@@ -95,17 +109,17 @@ export const getComplaintDetails = asyncHandler(async (req, res) => {
     status: complaint.status,
     votes: {
       ...voteCounts,
-      userVote: userVote?.vote_type || null,
+      userVote: toShortVote(userVote?.vote_type),
     },
     comments,
   });
 });
 
 export const voteOnComplaint = asyncHandler(async (req, res) => {
-  const { vote_type } = req.body;
-  const validVotes = ["upvote", "downvote"];
+  const rawVoteType = req.body.vote_type;
+  const vote_type = normalizeVoteType(rawVoteType);
 
-  if (!validVotes.includes(vote_type)) {
+  if (!vote_type) {
     return res.status(400).json({ message: "Invalid vote_type" });
   }
 
@@ -114,10 +128,18 @@ export const voteOnComplaint = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Complaint not found" });
   }
 
-  const existingVote = await Vote.findOne({
+  const userVotes = await Vote.find({
     complaint_id: complaint._id,
     user_id: req.user._id,
-  });
+  })
+    .sort({ createdAt: -1 });
+
+  // In case there are duplicates (shouldn't happen due to unique index), keep the latest and remove extras.
+  const existingVote = userVotes[0] ?? null;
+  if (userVotes.length > 1) {
+    const duplicates = userVotes.slice(1).map((v) => v._id);
+    await Vote.deleteMany({ _id: { $in: duplicates } });
+  }
 
   let action = "created";
 
@@ -145,7 +167,7 @@ export const voteOnComplaint = asyncHandler(async (req, res) => {
     message: `Vote ${action}`,
     votes: {
       ...voteCounts,
-      userVote: action === "removed" ? null : vote_type,
+      userVote: action === "removed" ? null : toShortVote(vote_type),
     },
   });
 });
@@ -165,7 +187,7 @@ export const getComplaintVotes = asyncHandler(async (req, res) => {
   res.status(200).json({
     votes: {
       ...voteCounts,
-      userVote: userVote?.vote_type || null,
+      userVote: toShortVote(userVote?.vote_type),
     },
   });
 });

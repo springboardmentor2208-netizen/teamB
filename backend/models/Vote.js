@@ -18,4 +18,7 @@ const VoteSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Ensure a user can only vote once per complaint
+VoteSchema.index({ user_id: 1, complaint_id: 1 }, { unique: true });
+
 export default mongoose.model("Vote", VoteSchema);

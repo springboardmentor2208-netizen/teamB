@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { authApi } from "../api/authApi.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -6,10 +6,17 @@ import { useAuth } from "../context/AuthContext.jsx";
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-  const { login, devLogin } = useAuth();
+  const { user, loading, login, devLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/dashboard";
+
+  // If already logged in, redirect to dashboard (or previous target)
+  useEffect(() => {
+    if (!loading && user) {
+      navigate(from, { replace: true });
+    }
+  }, [loading, user, from, navigate]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
