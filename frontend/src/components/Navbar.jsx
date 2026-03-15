@@ -5,42 +5,43 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  const navLinks = [
-    { to: "/dashboard", label: "Dashboard" },
-    { to: "/dashboard/view-complaints", label: "View Complaints" },
-    { to: "/dashboard/profile", label: "Profile" },
-    ...(location.pathname !== "/dashboard/report-issue"
-      ? [{ to: "/dashboard/report-issue", label: "Report Issue" }]
-      : []),
-  ];
+  const navLinks = user?.role === "admin"
+    ? [
+        { to: "/admin/dashboard", label: "Admin Dashboard" },
+        { to: "/dashboard/view-complaints", label: "View Complaints" },
+        { to: "/dashboard/profile", label: "Profile" },
+      ]
+    : [
+        { to: "/dashboard", label: "Dashboard" },
+        { to: "/dashboard/view-complaints", label: "View Complaints" },
+        { to: "/dashboard/profile", label: "Profile" },
+        ...(location.pathname !== "/dashboard/report-issue"
+          ? [{ to: "/dashboard/report-issue", label: "Report Issue" }]
+          : []),
+      ];
 
   return (
     <nav className="sticky top-0 z-30 flex justify-center bg-gradient-to-b from-[#F8F9FF]/80 via-[#F8F9FF]/60 to-transparent backdrop-blur-2xl">
       <div className="mt-3 mb-2 w-[94%] max-w-5xl">
         <div className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/40 shadow-[0_18px_50px_rgba(79,70,229,0.12)] backdrop-blur-2xl px-5 sm:px-7 py-3">
 
-          {/* Decorative blobs */}
           <div className="pointer-events-none absolute -left-10 -top-10 h-24 w-24 rounded-full bg-indigo-400/15 blur-3xl" />
           <div className="pointer-events-none absolute -right-12 -bottom-10 h-28 w-28 rounded-full bg-rose-400/15 blur-3xl" />
 
           <div className="relative flex items-center justify-between gap-4">
 
-            {/* ── Left: Logo + Nav ── */}
             <div className="flex items-center gap-6 sm:gap-8">
 
-              {/* Logo */}
               <Link to="/" className="flex items-center gap-2 shrink-0">
                 <span className="text-sm sm:text-[15px] font-bold tracking-[0.2em] uppercase bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent select-none">
                   CleanStreet
                 </span>
               </Link>
 
-              {/* Vertical divider */}
               {user && (
                 <span className="hidden sm:block h-4 w-px bg-slate-200" />
               )}
 
-              {/* Nav links */}
               {user && (
                 <div className="hidden sm:flex items-center gap-1">
                   {navLinks.map(({ to, label }) => (
@@ -59,7 +60,6 @@ const Navbar = () => {
                       {({ isActive }) => (
                         <>
                           {label}
-                          {/* Active dot indicator */}
                           {isActive && (
                             <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-indigo-500" />
                           )}
@@ -71,10 +71,8 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* ── Right: Auth controls ── */}
             <div className="flex items-center gap-2.5">
 
-              {/* Guest */}
               {!user && (
                 <>
                   <NavLink
@@ -107,12 +105,9 @@ const Navbar = () => {
                 </>
               )}
 
-              {/* Authenticated */}
               {user && (
                 <>
-                  {/* User pill */}
                   <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/50 px-3 py-1.5">
-                    {/* Avatar initial */}
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600 shrink-0">
                       {user.name?.[0]?.toUpperCase() ?? "U"}
                     </span>
@@ -121,7 +116,6 @@ const Navbar = () => {
                     </span>
                   </div>
 
-                  {/* Logout */}
                   <button
                     type="button"
                     onClick={logout}

@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import "./config/dns.js"
-import connectCloudinary from "./utils/imageupload/cloudinary.js ";
+import connectCloudinary from "./utils/imageupload/cloudinary.js";
 import connectDB from "./config/db.js";
 
 

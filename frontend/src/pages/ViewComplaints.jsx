@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { issueApi } from "../api/issueApi";
+import { useAuth } from "../context/AuthContext";
 
 /* Config  */
 const STATUS = {
@@ -577,6 +578,8 @@ function Skel() {
 
 /* ─── Main Page ─── */
 export default function ViewComplaints() {
+
+    const { user } = useAuth();
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -594,7 +597,9 @@ export default function ViewComplaints() {
     useEffect(() => {
         (async () => {
             try {
-                const { data } = await issueApi.getMyIssues();
+                const { data } =user?.role === "admin"
+                ? await issueApi.getAllIssues()
+                : await issueApi.getMyIssues();
                 setComplaints(data);
                 const v = {}, c = {}, u = {};
                 data.forEach(d => {

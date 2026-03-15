@@ -15,4 +15,12 @@ export const issueApi = {
 
   addComment: (id, content) =>
     axiosClient.post(`/issues/${id}/comments`, { content }),
+
+  getAllIssues: () =>
+    axiosClient.get("/issues"),
+
+  updateIssueStatus: (id, status) =>
+    axiosClient.patch(`/issues/${id}/status`, { status }),
+
+
 };

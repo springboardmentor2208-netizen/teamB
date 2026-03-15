@@ -50,7 +50,7 @@ export const createComplaint = asyncHandler(async (req, res) => {
     address: req.body.address,
     photo: photoData?.secure_url,
     photoPublicId: photoData?.public_id,
-    status: "received", // explicit
+    status: "received",
   });
 
   res.status(201).json({
@@ -59,12 +59,33 @@ export const createComplaint = asyncHandler(async (req, res) => {
   });
 });
 
+export const getAllComplaints = asyncHandler(async (req, res) => {
+  const complaints = await Complaint.find()
+    .populate("user_id", "name email role")
+    .sort({ createdAt: -1 });
+
+  const enriched = await Promise.all(
+    complaints.map(async (c) => {
+      const voteCounts = await getVoteCounts(c._id);
+      const commentCount = await Comment.countDocuments({ complaint_id: c._id });
+
+      return {
+        ...c.toObject(),
+        upvotes: voteCounts.upvotes,
+        downvotes: voteCounts.downvotes,
+        commentCount,
+      };
+    })
+  );
+
+  res.status(200).json(enriched);
+});
+
 export const getMyComplaints = asyncHandler(async (req, res) => {
   const complaints = await Complaint.find({
     user_id: req.user._id,
   }).sort({ createdAt: -1 });
 
-  // Enrich complaints with vote/comment counts and current user's vote
   const enriched = await Promise.all(
     complaints.map(async (c) => {
       const voteCounts = await getVoteCounts(c._id);
@@ -77,7 +98,7 @@ export const getMyComplaints = asyncHandler(async (req, res) => {
         downvotes: voteCounts.downvotes,
         userVote: toShortVote(userVote?.vote_type),
         commentCount,
-        comments: [], // kept for backwards compatibility; actual comments fetched in detail view
+        comments: [],
       };
     })
   );
@@ -131,10 +152,8 @@ export const voteOnComplaint = asyncHandler(async (req, res) => {
   const userVotes = await Vote.find({
     complaint_id: complaint._id,
     user_id: req.user._id,
-  })
-    .sort({ createdAt: -1 });
+  }).sort({ createdAt: -1 });
 
-  // In case there are duplicates (shouldn't happen due to unique index), keep the latest and remove extras.
   const existingVote = userVotes[0] ?? null;
   if (userVotes.length > 1) {
     const duplicates = userVotes.slice(1).map((v) => v._id);
@@ -145,7 +164,6 @@ export const voteOnComplaint = asyncHandler(async (req, res) => {
 
   if (existingVote) {
     if (existingVote.vote_type === vote_type) {
-      // Toggle off
       await existingVote.remove();
       action = "removed";
     } else {
@@ -233,7 +251,7 @@ export const getComplaintComments = asyncHandler(async (req, res) => {
 
 export const updateComplaintStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
-  const allowedStatuses = ["received", "in_review", "resolved"];
+  const allowedStatuses = ["received", "in_review", "in_progress", "resolved", "closed"];
 
   if (!allowedStatuses.includes(status)) {
     return res.status(400).json({ message: "Invalid status value" });
@@ -244,7 +262,6 @@ export const updateComplaintStatus = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: "Complaint not found" });
   }
 
-  // Only volunteers/admins can update status
   if (!["volunteer", "admin"].includes(req.user.role)) {
     return res.status(403).json({
       message: "Only volunteers or admins can update complaint status",

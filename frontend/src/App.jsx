@@ -5,6 +5,7 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
 import UserDashboard from "./pages/UserDashboard.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 import Profile from "./pages/Profile.jsx";
 import ReportIssue from "./pages/ReportIssue.jsx";
 import ViewComplaints from "./pages/ViewComplaints.jsx";   // ← NEW
@@ -31,6 +32,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Admin Dashboard */}
+<Route
+  path="/admin/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+      <AdminDashboard />
+    </ProtectedRoute>
+  }
+/>
 
         {/* ── Protected: View Complaints ── */}
         <Route
