@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
+import { adminApi } from "../api/adminApi";
 import { issueApi } from "../api/issueApi";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
+
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [stats, setStats] = useState({
     total: 0,
@@ -14,6 +20,13 @@ const AdminDashboard = () => {
 
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // 🔐 Protect route
+  useEffect(() => {
+    if (user && user.role !== "admin") {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   const calculateStats = (data) => {
     setStats({
@@ -28,12 +41,10 @@ const AdminDashboard = () => {
 
   const fetchComplaints = async () => {
     try {
-
-      const { data } = await issueApi.getAllIssues();
-
+      const { data } = await adminApi.getAllComplaints(); // 🔥 FIXED
       const issues = data || [];
-      setComplaints(issues);
 
+      setComplaints(issues);
       calculateStats(issues);
 
     } catch (err) {
@@ -50,6 +61,7 @@ const AdminDashboard = () => {
   const updateStatus = async (id, status) => {
     try {
 
+      // 🔥 status update still uses issue route (correct)
       await issueApi.updateIssueStatus(id, status);
 
       const updated = complaints.map((c) =>
@@ -95,6 +107,7 @@ const AdminDashboard = () => {
 
       <div className="w-full max-w-6xl">
 
+        {/* Header */}
         <div className="mb-6 ml-1">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Admin Dashboard
@@ -104,6 +117,7 @@ const AdminDashboard = () => {
           </p>
         </div>
 
+        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {cards.map((card, index) => (
             <div
@@ -120,6 +134,7 @@ const AdminDashboard = () => {
           ))}
         </div>
 
+        {/* Table */}
         <div className="mt-10 bg-white rounded-2xl shadow overflow-hidden">
 
           {loading ? (

@@ -1,29 +1,42 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+
 import MainLayout from "./layouts/MainLayout.jsx";
+
+// Public pages
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
+
+// User pages
 import UserDashboard from "./pages/UserDashboard.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
 import Profile from "./pages/Profile.jsx";
 import ReportIssue from "./pages/ReportIssue.jsx";
-import ViewComplaints from "./pages/ViewComplaints.jsx";   // ← NEW
+import ViewComplaints from "./pages/ViewComplaints.jsx";
+
+// 🔥 FIXED ADMIN IMPORTS (correct path)
+import AdminLayout from "./admin/AdminLayout.jsx";
+import AdminDashboard from "./admin/AdminDashboard.jsx";
+import ManageComplaints from "./admin/ManageComplaints.jsx";
+import ManageUsers from "./admin/ManageUsers.jsx";
+
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { ROLES } from "./utils/roles.js";
 
 function App() {
   return (
     <Routes>
+
+      {/* ───────── MAIN APP ───────── */}
       <Route element={<MainLayout />}>
 
-        {/* ── Public routes ── */}
+        {/* Public */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* ── Protected: Dashboard ── */}
+        {/* User Dashboard */}
         <Route
           path="/dashboard"
           element={
@@ -33,17 +46,7 @@ function App() {
           }
         />
 
-        {/* Admin Dashboard */}
-<Route
-  path="/admin/dashboard"
-  element={
-    <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
-      <AdminDashboard />
-    </ProtectedRoute>
-  }
-/>
-
-        {/* ── Protected: View Complaints ── */}
+        {/* View Complaints */}
         <Route
           path="/dashboard/view-complaints"
           element={
@@ -53,7 +56,7 @@ function App() {
           }
         />
 
-        {/* ── Protected: Profile ── */}
+        {/* Profile */}
         <Route
           path="/dashboard/profile"
           element={
@@ -63,7 +66,7 @@ function App() {
           }
         />
 
-        {/* ── Protected: Report Issue ── */}
+        {/* Report Issue */}
         <Route
           path="/dashboard/report-issue"
           element={
@@ -74,6 +77,24 @@ function App() {
         />
 
       </Route>
+
+      {/* ───────── ADMIN MODULE ───────── */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="complaints" element={<ManageComplaints />} />
+        <Route path="users" element={<ManageUsers />} />
+      </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" />} />
+
     </Routes>
   );
 }
