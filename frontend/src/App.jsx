@@ -14,11 +14,12 @@ import Profile from "./pages/Profile.jsx";
 import ReportIssue from "./pages/ReportIssue.jsx";
 import ViewComplaints from "./pages/ViewComplaints.jsx";
 
-// 🔥 FIXED ADMIN IMPORTS (correct path)
+// Admin Module Imports
 import AdminLayout from "./admin/AdminLayout.jsx";
 import AdminDashboard from "./admin/AdminDashboard.jsx";
 import ManageComplaints from "./admin/ManageComplaints.jsx";
 import ManageUsers from "./admin/ManageUsers.jsx";
+import ReportsPage from "./admin/ReportsPage.jsx";
 
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { ROLES } from "./utils/roles.js";
@@ -26,17 +27,15 @@ import { ROLES } from "./utils/roles.js";
 function App() {
   return (
     <Routes>
-
-      {/* ───────── MAIN APP ───────── */}
+      {/* ───────── MAIN APP (Citizens & Volunteers) ───────── */}
       <Route element={<MainLayout />}>
-
-        {/* Public */}
+        {/* Public Routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* User Dashboard */}
+        {/* Protected User Dashboard Routes */}
         <Route
           path="/dashboard"
           element={
@@ -45,8 +44,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* View Complaints */}
         <Route
           path="/dashboard/view-complaints"
           element={
@@ -55,8 +52,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* Profile */}
         <Route
           path="/dashboard/profile"
           element={
@@ -65,8 +60,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* Report Issue */}
         <Route
           path="/dashboard/report-issue"
           element={
@@ -75,10 +68,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-
       </Route>
 
-      {/* ───────── ADMIN MODULE ───────── */}
+      {/* ───────── ADMIN MODULE (Restricted) ───────── */}
       <Route
         path="/admin"
         element={
@@ -87,14 +79,17 @@ function App() {
           </ProtectedRoute>
         }
       >
+        {/* 🔥 NEW: Auto-redirect /admin to /admin/dashboard */}
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="complaints" element={<ManageComplaints />} />
         <Route path="users" element={<ManageUsers />} />
+        <Route path="reports" element={<ReportsPage />} />
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" />} />
-
+      {/* ───────── FALLBACK ───────── */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
