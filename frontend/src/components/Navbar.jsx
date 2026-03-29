@@ -32,7 +32,10 @@ const Navbar = () => {
 
             <div className="flex items-center gap-6 sm:gap-8">
 
-              <Link to="/" className="flex items-center gap-2 shrink-0">
+              <Link
+  to={user ? "/dashboard" : "/"}
+  className="flex items-center gap-2 shrink-0"
+>
                 <span className="text-sm sm:text-[15px] font-bold tracking-[0.2em] uppercase bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent select-none">
                   CleanStreet
                 </span>

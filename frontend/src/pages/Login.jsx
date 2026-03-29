@@ -108,6 +108,14 @@ return ( <div className="w-full flex flex-col items-center py-1"> <div className
             className="rounded-xl border border-slate-100 bg-white/50 px-4 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-400 transition-all"
           />
         </div>
+        <div className="text-right mt-1">
+  <Link
+    to="/forgot-password"
+    className="text-xs text-indigo-600 font-semibold hover:underline"
+  >
+    Forgot Password?
+  </Link>
+</div>
 
         <button
           type="submit"
