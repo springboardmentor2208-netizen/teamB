@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authApi } from "../api/authApi.js";
+import { useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const Register = () => {
   const [step, setStep] = useState(1); // 1: form, 2: OTP verification
@@ -17,6 +19,12 @@ const Register = () => {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
+  useEffect(() => {
+  if (user) {
+    navigate("/dashboard"); //redirect if already logged in
+  }
+}, [user, navigate]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -26,6 +34,18 @@ const Register = () => {
     e.preventDefault();
     setError("");
     setMessage("");
+    if (!/^\d{10}$/.test(form.phone)) {
+    return setError("Phone number must be exactly 10 digits");
+  }
+
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$!%*?&]{6,}$/;
+
+  if (!passwordRegex.test(form.password)) {
+    return setError(
+      "Password must be at least 6 characters and include letters & numbers"
+    );
+  }
+
     try {
       await authApi.register(form);
       setMessage("OTP sent to your email for verification");
@@ -46,6 +66,8 @@ const Register = () => {
       setError(err.response?.data?.message || "OTP verification failed");
     }
   };
+
+  
 
   return (
     <div className="w-full flex flex-col items-center py-1 px-4">
@@ -114,12 +136,16 @@ const Register = () => {
             <div className="flex flex-col gap-1">
               <label className="text-[10px] uppercase tracking-widest font-bold text-slate-600 ml-1">Phone</label>
               <input
-                className="rounded-xl border border-slate-100 bg-white/50 px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-400 transition-all"
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                placeholder="Optional"
-              />
+  name="phone"
+  value={form.phone}
+  maxLength="10"
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, ""); // only digits
+    setForm((prev) => ({ ...prev, phone: value }));
+  }}
+  placeholder="Optional"
+  className="rounded-xl border border-slate-100 bg-white/50 px-3.5 py-2 text-sm"
+/>
             </div>
 
             <div className="flex flex-col gap-1">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { issueApi } from "../api/issueApi";
 
@@ -15,30 +15,42 @@ const UserDashboard = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchComplaints = async () => {
-      try {
-        const { data } = await issueApi.getMyIssues();
+  const fetchComplaints = useCallback(async () => {
+    try {
+      const { data } = await issueApi.getMyIssues();
 
-        const issues = data || [];
-        setComplaints(issues);
+      const issues = data || [];
+      setComplaints(issues);
 
-        setStats({
-          total: issues.length,
-          received: issues.filter(i => i.status === "received").length,
-          in_review: issues.filter(i => i.status === "in_review").length,
-          resolved: issues.filter(i => i.status === "resolved").length,
-        });
-
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchComplaints();
+      setStats({
+        total: issues.length,
+        received: issues.filter(i => i.status === "received").length,
+        in_review: issues.filter(i => i.status === "in_review").length,
+        resolved: issues.filter(i => i.status === "resolved").length,
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchComplaints();
+  }, [fetchComplaints]);
+
+  useEffect(() => {
+    const refresh = () => {
+      setLoading(true);
+      fetchComplaints();
+    };
+    window.addEventListener("focus", refresh);
+    window.addEventListener("complaintsUpdated", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("complaintsUpdated", refresh);
+    };
+  }, [fetchComplaints]);
 
   const getStatusStyle = (status) => {
     switch (status) {

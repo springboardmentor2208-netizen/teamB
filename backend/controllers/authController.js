@@ -99,6 +99,20 @@ export const forgotPassword = async (req, res) => {
   user.resetToken = otp;
   user.resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
   await user.save();
+  const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+await transporter.sendMail({
+  from: process.env.EMAIL_USER,
+  to: email,
+  subject: "Password Reset OTP",
+  text: `Your OTP is ${otp}`,
+});
 
   res.json({ message: "OTP sent" });
 };

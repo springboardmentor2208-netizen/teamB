@@ -41,8 +41,8 @@ const AdminDashboard = () => {
 
   const fetchComplaints = async () => {
     try {
-      const { data } = await adminApi.getAllComplaints(); // 🔥 FIXED
-      const issues = data || [];
+const res = await adminApi.getAllComplaints();
+const issues = res.data.data || res.data || [];
 
       setComplaints(issues);
       calculateStats(issues);
