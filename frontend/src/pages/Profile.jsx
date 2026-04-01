@@ -40,9 +40,17 @@ const Profile = () => {
   }, []);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "phone") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      setForm((prev) => ({ ...prev, phone: digitsOnly }));
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
@@ -56,6 +64,11 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (form.phone && !/^\d{10}$/.test(form.phone)) {
+      setError("Phone number must be exactly 10 digits");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -163,9 +176,14 @@ const Profile = () => {
                 Phone
               </label>
               <input
+                type="tel"
                 name="phone"
                 value={form.phone}
                 onChange={handleChange}
+                inputMode="numeric"
+                pattern="\d{10}"
+                maxLength={10}
+                placeholder="Enter 10 digit phone"
                 className="rounded-xl border border-slate-200 px-4 py-2"
               />
             </div>

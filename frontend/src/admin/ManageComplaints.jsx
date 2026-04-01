@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "../api/adminApi";
 import { issueApi } from "../api/issueApi";
 
@@ -19,20 +19,34 @@ const StatusBadge = ({ status }) => {
 const ManageComplaints = () => {
   const [complaints, setComplaints] = useState([]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const stages = ["received", "in_review", "in_progress", "resolved"];
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
     try {
       const { data } = await adminApi.getAllComplaints();
       setComplaints(data || []);
     } catch (err) {
       console.error("Failed to fetch complaints", err);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    const handleRefresh = () => fetchData();
+    window.addEventListener("focus", handleRefresh);
+    window.addEventListener("complaintsUpdated", handleRefresh);
+    return () => {
+      window.removeEventListener("focus", handleRefresh);
+      window.removeEventListener("complaintsUpdated", handleRefresh);
+    };
+  }, [fetchData]);
 
   const updateStatus = async (id, status) => {
     await issueApi.updateIssueStatus(id, status);
@@ -42,15 +56,16 @@ const ManageComplaints = () => {
     if (selectedComplaint?._id === id) {
       setSelectedComplaint((prev) => ({ ...prev, status }));
     }
+    window.dispatchEvent(new Event("complaintsUpdated"));
   };
 
   return (
-    <div className="flex gap-8 h-[calc(100vh-140px)] overflow-hidden antialiased font-sans">
+    <div className="flex gap-8 min-h-[calc(100vh-160px)] h-[calc(100vh-160px)] overflow-hidden antialiased font-sans">
 
       {/* --- Left Side: Complaint List --- */}
-      <div className={`flex flex-col gap-4 transition-all duration-500 overflow-y-auto pr-2 custom-scrollbar ${selectedComplaint ? "w-[40%]" : "w-full"}`}>
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+      <div className={`flex flex-col gap-4 min-h-0 h-full transition-all duration-500 overflow-hidden pr-2 custom-scrollbar ${selectedComplaint ? "w-[40%]" : "w-full"}`}>
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden min-h-0 flex flex-col h-full">
+          <div className="overflow-y-auto min-h-0 flex-1 custom-scrollbar">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -60,69 +75,82 @@ const ManageComplaints = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {complaints.map((c) => {
-                  const isSelected = selectedComplaint?._id === c._id;
-                  return (
-                    <tr
-                      key={c._id}
-                      onClick={() => setSelectedComplaint(c)}
-                      className={`cursor-pointer transition-all ${
-                        isSelected ? "bg-indigo-50/40" : "hover:bg-slate-50/80"
-                      }`}
-                    >
-                      <td className="p-6">
-                        <div className="flex flex-col gap-1">
-                          <p className={`font-black text-sm ${isSelected ? 'text-indigo-600' : 'text-slate-800'}`}>
-                            {c.title}
-                          </p>
-                          <p className="text-[11px] text-slate-400 font-medium truncate max-w-[200px]">
-                            {c.address}
-                          </p>
-                          <button className="mt-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 hover:text-indigo-700 transition-colors">
-                             <span className="text-xs">📸</span> View Picture
-                          </button>
-                        </div>
-                      </td>
-
-                      {/* --- REFINED CHECKBOX STYLE PIPELINE --- */}
-                      {!selectedComplaint && (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={3} className="p-10 text-center text-sm text-slate-500">
+                      Loading complaints...
+                    </td>
+                  </tr>
+                ) : complaints.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="p-10 text-center text-sm text-slate-500">
+                      No complaints found. Refresh or check back later.
+                    </td>
+                  </tr>
+                ) : (
+                  complaints.map((c) => {
+                    const isSelected = selectedComplaint?._id === c._id;
+                    return (
+                      <tr
+                        key={c._id}
+                        onClick={() => setSelectedComplaint(c)}
+                        className={`cursor-pointer transition-all ${
+                          isSelected ? "bg-indigo-50/40" : "hover:bg-slate-50/80"
+                        }`}
+                      >
                         <td className="p-6">
-                          <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                            {stages.map((s, i) => {
-                              const active = stages.indexOf(c.status) >= i;
-                              return (
-                                <div key={s} className="flex items-center">
-                                  <button
-                                    onClick={() => updateStatus(c._id, s)}
-                                    title={s.replace('_', ' ')}
-                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 border-[1.5px] ${
-                                      active
-                                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100 scale-110"
-                                      : "bg-white border-indigo-200 text-transparent hover:border-indigo-400 hover:ring-4 hover:ring-indigo-50"
-                                    }`}
-                                  >
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  </button>
-                                  {i < 3 && (
-                                    <div className={`w-6 h-[1.5px] mx-0.5 rounded-full transition-colors duration-500 ${
-                                      active && stages.indexOf(c.status) > i ? "bg-indigo-400" : "bg-slate-100"
-                                    }`} />
-                                  )}
-                                </div>
-                              );
-                            })}
+                          <div className="flex flex-col gap-1">
+                            <p className={`font-black text-sm ${isSelected ? 'text-indigo-600' : 'text-slate-800'}`}>
+                              {c.title}
+                            </p>
+                            <p className="text-[11px] text-slate-400 font-medium truncate max-w-[200px]">
+                              {c.address}
+                            </p>
+                            <button className="mt-2 text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1.5 hover:text-indigo-700 transition-colors">
+                              <span className="text-xs">📸</span> View Picture
+                            </button>
                           </div>
                         </td>
-                      )}
 
-                      <td className="p-6 text-right">
-                        <StatusBadge status={c.status} />
-                      </td>
-                    </tr>
-                  );
-                })}
+                        {!selectedComplaint && (
+                          <td className="p-6">
+                            <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              {stages.map((s, i) => {
+                                const active = stages.indexOf(c.status) >= i;
+                                return (
+                                  <div key={s} className="flex items-center">
+                                    <button
+                                      onClick={() => updateStatus(c._id, s)}
+                                      title={s.replace('_', ' ')}
+                                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 border-[1.5px] ${
+                                        active
+                                          ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100 scale-110"
+                                          : "bg-white border-indigo-200 text-transparent hover:border-indigo-400 hover:ring-4 hover:ring-indigo-50"
+                                      }`}
+                                    >
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                    </button>
+                                    {i < 3 && (
+                                      <div className={`w-6 h-[1.5px] mx-0.5 rounded-full transition-colors duration-500 ${
+                                        active && stages.indexOf(c.status) > i ? "bg-indigo-400" : "bg-slate-100"
+                                      }`} />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                        )}
+
+                        <td className="p-6 text-right">
+                          <StatusBadge status={c.status} />
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -131,7 +159,7 @@ const ManageComplaints = () => {
 
       {/* --- Right Side: Details Sidebar (remains as high-end version) --- */}
       {selectedComplaint && (
-        <div className="flex-1 bg-white rounded-[3rem] border border-slate-100 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right-10 zoom-in-95 duration-500">
+        <div className="sticky top-32 self-start w-[60%] min-h-0 h-full bg-white rounded-[3rem] border border-slate-100 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right-10 zoom-in-95 duration-500">
           <div className="p-8 pb-4 flex justify-between items-center">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 bg-indigo-50 px-4 py-1.5 rounded-full">
               Case File: #{selectedComplaint._id.slice(-6)}

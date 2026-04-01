@@ -9,7 +9,7 @@ const ReportIssue = () => {
   const [loadingLocation, setLoadingLocation] = useState(false);
 
   const [title, setTitle] = useState("");
-  const [issueType, setIssueType] = useState("");
+  const [category, setCategory] = useState("");
   const [priority, setPriority] = useState("");
   const [address, setAddress] = useState("");
   const [landmark, setLandmark] = useState("");
@@ -76,6 +76,7 @@ const ReportIssue = () => {
 
       formData.append("title", title);
       formData.append("description", description);
+      formData.append("category", category);
       formData.append("address", address);
       formData.append("latitude", location.lat);
       formData.append("longitude", location.lng);
@@ -85,9 +86,12 @@ const ReportIssue = () => {
       await issueApi.createIssue(formData);
 
       alert("Complaint submitted successfully!");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("complaintsUpdated"));
+      }
 
       setTitle("");
-      setIssueType("");
+      setCategory("");
       setPriority("");
       setAddress("");
       setLandmark("");
@@ -123,15 +127,17 @@ const ReportIssue = () => {
           />
 
           <select
-            value={issueType}
-            onChange={(e) => setIssueType(e.target.value)}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
             className="border p-3 rounded-xl"
+            required
           >
-            <option value="">Issue Type</option>
-            <option>Garbage</option>
-            <option>Pothole</option>
-            <option>Water Leakage</option>
-            <option>Streetlight</option>
+            <option value="">Select Category</option>
+            <option value="Garbage">Garbage</option>
+            <option value="Pothole">Pothole</option>
+            <option value="Water Leakage">Water Leakage</option>
+            <option value="Streetlight">Streetlight</option>
+            <option value="Other">Other</option>
           </select>
 
           <select

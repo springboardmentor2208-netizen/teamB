@@ -111,6 +111,15 @@ const TYPE_ICONS_MAP = {
     "Other": Icons.Other,
 };
 
+const CATEGORY_OPTIONS = [
+    "all",
+    "Garbage",
+    "Pothole",
+    "Water Leakage",
+    "Streetlight",
+    "Other",
+];
+
 const STATUS_STEP_ICONS = [Icons.Inbox, Icons.Eye, Icons.Gear, Icons.Check, Icons.Lock];
 
 const fDate = (iso) => {
@@ -486,10 +495,29 @@ function ComplaintCard({ complaint, votes, userVote, commentCount, onOpen, onVot
                     }}>
                         <TypeIcon width={16} height={16} />
                     </div>
-                    <h3 style={{
-                        margin: 0, fontSize: 16, fontWeight: 700, color: "#0f172a",
-                        lineHeight: 1.35, wordBreak: "break-word",
-                    }}>{complaint.title}</h3>
+                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                        <h3 style={{
+                            margin: 0, fontSize: 16, fontWeight: 700, color: "#0f172a",
+                            lineHeight: 1.35, wordBreak: "break-word",
+                        }}>{complaint.title}</h3>
+                        <span style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "5px 10px",
+                            borderRadius: 999,
+                            background: "#f8fafc",
+                            color: "#0f172a",
+                            fontSize: 11,
+                            fontWeight: 700,
+                            border: "1px solid #e2e8f0",
+                            width: "fit-content",
+                            maxWidth: "100%",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                        }}>{cat}</span>
+                    </div>
                 </div>
                 <div style={{ flexShrink: 0 }}>
                     <StatusBadge status={complaint.status} />
@@ -595,11 +623,11 @@ export default function ViewComplaints() {
     const showToast = (msg, type = "info") => setToast({ msg, type });
 
     useEffect(() => {
+        if (!user) return;
+
         (async () => {
             try {
-                const { data } =user?.role === "admin"
-                ? await issueApi.getAllIssues()
-                : await issueApi.getMyIssues();
+                const { data } = await issueApi.getAllIssues();
                 setComplaints(data);
                 const v = {}, c = {}, u = {};
                 data.forEach(d => {
@@ -616,18 +644,20 @@ export default function ViewComplaints() {
                 setVoteData(v);
                 setUserVotes(u);
                 setComments(c);
-            } catch (e) { console.error(e); }
-            finally { setLoading(false); }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
         })();
-    }, []);
+    }, [user]);
 
-    const categories = useMemo(() =>
-        ["all", ...new Set(complaints.map(c => c.category).filter(Boolean))], [complaints]);
+    const categories = useMemo(() => CATEGORY_OPTIONS, []);
 
     const filtered = useMemo(() => {
         let list = [...complaints];
         if (filterStatus !== "all") list = list.filter(c => c.status === filterStatus);
-        if (filterCat !== "all") list = list.filter(c => c.category === filterCat);
+        if (filterCat !== "all") list = list.filter(c => (c.category ?? "Other") === filterCat);
         if (search.trim()) {
             const q = search.toLowerCase();
             list = list.filter(c =>

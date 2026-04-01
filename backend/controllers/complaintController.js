@@ -43,6 +43,7 @@ export const createComplaint = asyncHandler(async (req, res) => {
     user_id: req.user._id,
     title: req.body.title,
     description: req.body.description,
+    category: req.body.category || req.body.issueType || "Other",
     location_coords: {
       lat: parseFloat(req.body.latitude),
       lng: parseFloat(req.body.longitude),

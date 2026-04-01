@@ -1,45 +1,77 @@
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { Chart } from "chart.js/auto";
 import { adminApi } from "../api/adminApi";
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, resolved: 0, users: 0 });
+    const [complaints, setComplaints] = useState([]);
     const barRef = useRef(null);
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                // 🔥 Fetch both complaints and users to get real counts
-                const [complaintsRes, usersRes] = await Promise.all([
-                    adminApi.getAllComplaints(),
-                    adminApi.getAllUsers()
-                ]);
+    const getLastMonths = (count = 7) => {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const now = new Date();
+        return Array.from({ length: count }, (_, idx) => {
+            const date = new Date(now.getFullYear(), now.getMonth() - count + 1 + idx, 1);
+            return { label: monthNames[date.getMonth()], month: date.getMonth(), year: date.getFullYear() };
+        });
+    };
 
-                const complaints = complaintsRes.data || [];
-                const users = usersRes.data || [];
+    const fetchComplaints = useCallback(async () => {
+        try {
+            // 🔥 Fetch both complaints and users to get real counts
+            const [complaintsRes, usersRes] = await Promise.all([
+                adminApi.getAllComplaints(),
+                adminApi.getAllUsers()
+            ]);
 
-                setStats({
-                    total: complaints.length,
-                    pending: complaints.filter(c => ["received", "in_review"].includes(c.status)).length,
-                    inProgress: complaints.filter(c => c.status === "in_progress").length,
-                    resolved: complaints.filter(c => c.status === "resolved").length,
-                    users: users.length // ✅ Now using real database count
-                });
-            } catch (err) {
-                console.error("Failed to fetch dashboard stats", err);
-            }
-        };
-        load();
+            const complaints = complaintsRes.data || [];
+            const users = usersRes.data || [];
+
+            setComplaints(complaints);
+            setStats({
+                total: complaints.length,
+                pending: complaints.filter(c => ["received", "in_review"].includes(c.status)).length,
+                inProgress: complaints.filter(c => c.status === "in_progress").length,
+                resolved: complaints.filter(c => c.status === "resolved").length,
+                users: users.length // ✅ Now using real database count
+            });
+        } catch (err) {
+            console.error("Failed to fetch dashboard stats", err);
+        }
     }, []);
 
     useEffect(() => {
+        fetchComplaints();
+    }, [fetchComplaints]);
+
+    useEffect(() => {
+        const refresh = () => fetchComplaints();
+        window.addEventListener("focus", refresh);
+        window.addEventListener("complaintsUpdated", refresh);
+        return () => {
+            window.removeEventListener("focus", refresh);
+            window.removeEventListener("complaintsUpdated", refresh);
+        };
+    }, [fetchComplaints]);
+
+    useEffect(() => {
+        if (!barRef.current) return;
+
+        const months = getLastMonths(7);
+        const monthlyData = months.map(({ month, year }) =>
+            complaints.filter(c => {
+                const created = new Date(c.createdAt);
+                return created.getMonth() === month && created.getFullYear() === year;
+            }).length
+        );
+
         const chart = new Chart(barRef.current, {
             type: "bar",
             data: {
-                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+                labels: months.map(m => m.label),
                 datasets: [{
                     label: "Complaints",
-                    data: [12, 19, 8, 24, 17, 31, 22],
+                    data: monthlyData,
                     backgroundColor: "rgba(99,102,241,0.85)",
                     borderRadius: 6
                 }]
@@ -54,7 +86,7 @@ const AdminDashboard = () => {
             }
         });
         return () => chart.destroy();
-    }, []);
+    }, [complaints]);
 
     const cards = [
         { label: "Total", val: stats.total, color: "#6366f1", bg: "#eef2ff" },
