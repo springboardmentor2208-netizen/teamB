@@ -4,23 +4,10 @@ import { adminApi } from "../api/adminApi";
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState({ total: 0, pending: 0, inProgress: 0, resolved: 0, users: 0 });
-<<<<<<< HEAD
-    const [monthlyData, setMonthlyData] = useState(new Array(12).fill(0)); // Array for Jan-Dec
-=======
     const [complaints, setComplaints] = useState([]);
->>>>>>> ee26d023b945dc67c69df96f3e0363fe02c2f2a1
     const barRef = useRef(null);
     const chartInstance = useRef(null);
 
-<<<<<<< HEAD
-    useEffect(() => {
-        const load = async () => {
-            try {
-                const [complaintsRes, usersRes] = await Promise.all([
-                    adminApi.getAllComplaints(),
-                    adminApi.getAllUsers()
-                ]);
-=======
     const getLastMonths = (count = 7) => {
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const now = new Date();
@@ -29,39 +16,14 @@ const AdminDashboard = () => {
             return { label: monthNames[date.getMonth()], month: date.getMonth(), year: date.getFullYear() };
         });
     };
->>>>>>> ee26d023b945dc67c69df96f3e0363fe02c2f2a1
 
     const fetchComplaints = useCallback(async () => {
         try {
-            // 🔥 Fetch both complaints and users to get real counts
             const [complaintsRes, usersRes] = await Promise.all([
                 adminApi.getAllComplaints(),
                 adminApi.getAllUsers()
             ]);
 
-<<<<<<< HEAD
-                // --- Calculate Chart Data (Live) ---
-                const counts = new Array(12).fill(0);
-                complaints.forEach(c => {
-                    const month = new Date(c.createdAt).getMonth(); // 0 = Jan, 1 = Feb...
-                    counts[month] += 1;
-                });
-                setMonthlyData(counts);
-
-                // --- Set Top Stats ---
-                setStats({
-                    total: complaints.length,
-                    pending: complaints.filter(c => ["received", "in_review"].includes(c.status)).length,
-                    inProgress: complaints.filter(c => c.status === "in_progress").length,
-                    resolved: complaints.filter(c => c.status === "resolved").length,
-                    users: users.length
-                });
-            } catch (err) {
-                console.error("Failed to fetch dashboard stats", err);
-            }
-        };
-        load();
-=======
             const complaints = complaintsRes.data || [];
             const users = usersRes.data || [];
 
@@ -71,59 +33,15 @@ const AdminDashboard = () => {
                 pending: complaints.filter(c => ["received", "in_review"].includes(c.status)).length,
                 inProgress: complaints.filter(c => c.status === "in_progress").length,
                 resolved: complaints.filter(c => c.status === "resolved").length,
-                users: users.length // ✅ Now using real database count
+                users: users.length
             });
+
         } catch (err) {
             console.error("Failed to fetch dashboard stats", err);
         }
->>>>>>> ee26d023b945dc67c69df96f3e0363fe02c2f2a1
     }, []);
 
-    // Effect to handle Chart lifecycle
     useEffect(() => {
-<<<<<<< HEAD
-        if (barRef.current) {
-            // Destroy existing chart if it exists to prevent memory leaks/glitches
-            if (chartInstance.current) {
-                chartInstance.current.destroy();
-            }
-
-            const ctx = barRef.current.getContext("2d");
-            chartInstance.current = new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-                    datasets: [{
-                        label: "Complaints",
-                        data: monthlyData, // ✅ Now using state variable
-                        backgroundColor: "rgba(99, 102, 241, 0.85)",
-                        borderRadius: 6,
-                        hoverBackgroundColor: "#4f46e5"
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } },
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: "rgba(0,0,0,0.05)" },
-                            ticks: { stepSize: 1 }
-                        }
-                    }
-                }
-            });
-        }
-
-        return () => {
-            if (chartInstance.current) chartInstance.current.destroy();
-        };
-    }, [monthlyData]); // Re-run when monthlyData changes
-=======
         fetchComplaints();
     }, [fetchComplaints]);
 
@@ -140,6 +58,10 @@ const AdminDashboard = () => {
     useEffect(() => {
         if (!barRef.current) return;
 
+        if (chartInstance.current) {
+            chartInstance.current.destroy();
+        }
+
         const months = getLastMonths(7);
         const monthlyData = months.map(({ month, year }) =>
             complaints.filter(c => {
@@ -148,7 +70,7 @@ const AdminDashboard = () => {
             }).length
         );
 
-        const chart = new Chart(barRef.current, {
+        chartInstance.current = new Chart(barRef.current, {
             type: "bar",
             data: {
                 labels: months.map(m => m.label),
@@ -168,9 +90,11 @@ const AdminDashboard = () => {
                 }
             }
         });
-        return () => chart.destroy();
+
+        return () => {
+            if (chartInstance.current) chartInstance.current.destroy();
+        };
     }, [complaints]);
->>>>>>> ee26d023b945dc67c69df96f3e0363fe02c2f2a1
 
     const cards = [
         { label: "Total", val: stats.total, color: "#6366f1", bg: "#eef2ff", icon: "#" },

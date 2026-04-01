@@ -1,12 +1,15 @@
 import ReportMap from "../components/ReportMap";
 import { useState } from "react";
 import { issueApi } from "../api/issueApi";
+import Lottie from "lottie-react";
+import successAnimation from "../assets/success.json";
 
 const ReportIssue = () => {
   const [photo, setPhoto] = useState(null);
   const [location, setLocation] = useState(null);
   const [accuracy, setAccuracy] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -15,7 +18,6 @@ const ReportIssue = () => {
   const [landmark, setLandmark] = useState("");
   const [description, setDescription] = useState("");
 
-  // Reverse Geocoding
   const reverseGeocode = async (lat, lng) => {
     try {
       const res = await fetch(
@@ -85,10 +87,11 @@ const ReportIssue = () => {
 
       await issueApi.createIssue(formData);
 
-      alert("Complaint submitted successfully!");
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("complaintsUpdated"));
       }
+
+      setSubmitted(true);
 
       setTitle("");
       setCategory("");
@@ -104,6 +107,29 @@ const ReportIssue = () => {
       alert("Submission failed.");
     }
   };
+
+  // SUCCESS SCREEN WITH LOTTIE
+  if (submitted) {
+    return (
+      <div className="w-full h-[80vh] flex flex-col items-center justify-center">
+        <div className="w-72">
+          <Lottie animationData={successAnimation} loop={false} />
+        </div>
+        <h1 className="text-3xl font-bold text-green-600 mt-4">
+          Complaint Filed Successfully
+        </h1>
+        <p className="text-gray-500 mt-2 mb-6">
+          Our team will review and resolve the issue.
+        </p>
+        <button
+          onClick={() => setSubmitted(false)}
+          className="bg-indigo-600 text-white px-6 py-3 rounded-full"
+        >
+          File Another Complaint
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex justify-center">
